@@ -6,6 +6,9 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/jack-sneddon/my-health-tracker/cmd/tracker/commands/result"
+	"github.com/jack-sneddon/my-health-tracker/internal/models"
+	"github.com/jack-sneddon/my-health-tracker/internal/validator"
 )
 
 var (
@@ -67,12 +70,94 @@ func ShowWeightRecord(id string, date, weight string, notes string) {
 	}
 }
 
-// ShowDeleteConfirmation displays a formatted delete confirmation
-func ShowDeleteConfirmation(record string, context string) ConfirmationResult {
+// handle record details
+func ShowDeleteConfirmation(id, date, weight, notes string) ConfirmationResult {
 	headerColor.Println("\nDelete Confirmation:")
-	fmt.Printf("%s\n", record)
-	if context != "" {
-		fmt.Printf("\nContext:\n%s\n", context)
+	fmt.Printf("  ID:     %s\n", id)
+	fmt.Printf("  Date:   %s\n", date)
+	fmt.Printf("  Weight: %s lbs\n", weight)
+	if notes != "" {
+		fmt.Printf("  Notes:  %s\n", notes)
 	}
 	return ConfirmAction("Are you sure you want to delete this record?")
+}
+
+func ShowCommandResult(result result.CommandResult) {
+	if !result.Success {
+		ShowError(result.Error.Error())
+		for _, warning := range result.Warnings {
+			ShowWarning(warning)
+		}
+		return
+	}
+
+	for _, msg := range result.Messages {
+		ShowSuccess(msg)
+	}
+
+	if weightRecord, ok := result.Data.(models.WeightRecord); ok {
+		ShowWeightRecord(
+			weightRecord.ID,
+			weightRecord.Date.Format(validator.DateFormat),
+			fmt.Sprintf("%.1f", weightRecord.Weight),
+			weightRecord.Notes,
+		)
+	}
+}
+
+// internal/display/messages.go
+func ShowTable(headers []string, rows [][]string) {
+	// Calculate column widths
+	widths := make([]int, len(headers))
+	for i, h := range headers {
+		widths[i] = len(h)
+	}
+	for _, row := range rows {
+		for i, cell := range row {
+			if len(cell) > widths[i] {
+				widths[i] = len(cell)
+			}
+		}
+	}
+
+	// Print headers
+	headerColor.Printf("\n")
+	for i, header := range headers {
+		headerColor.Printf("%-*s", widths[i]+2, header)
+	}
+	fmt.Println()
+
+	// Print separator
+	totalWidth := 0
+	for _, w := range widths {
+		totalWidth += w + 2
+	}
+	fmt.Println(strings.Repeat("-", totalWidth))
+
+	// Print rows
+	for _, row := range rows {
+		for i, cell := range row {
+			fmt.Printf("%-*s", widths[i]+2, cell)
+		}
+		fmt.Println()
+	}
+	fmt.Println()
+}
+
+func ShowStats(stats map[string]string) {
+	headerColor.Printf("\nSummary:\n")
+	maxKeyLength := 0
+	for k := range stats {
+		if len(k) > maxKeyLength {
+			maxKeyLength = len(k)
+		}
+	}
+
+	for k, v := range stats {
+		fmt.Printf("%-*s: %s\n", maxKeyLength, k, v)
+	}
+}
+
+func ShowHeader(text string) {
+	headerColor.Printf("\n%s\n", text)
 }

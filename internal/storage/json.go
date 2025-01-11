@@ -393,53 +393,53 @@ func (s *JSONStorage) GetWeight(date time.Time) (*models.WeightRecord, error) {
 }
 
 func (s *JSONStorage) GetWeightRange(start, end time.Time, isDefaultRange bool) ([]models.WeightRecord, error) {
-    filepath := s.getFilePath("weight")
-    lock := s.getLock(filepath)
+	filepath := s.getFilePath("weight")
+	lock := s.getLock(filepath)
 
-    lock.RLock()
-    defer lock.RUnlock()
+	lock.RLock()
+	defer lock.RUnlock()
 
-    data, err := os.ReadFile(filepath)
-    if err != nil {
-        return nil, fmt.Errorf("failed to read weight file: %w", err)
-    }
+	data, err := os.ReadFile(filepath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read weight file: %w", err)
+	}
 
-    var records []models.WeightRecord
-    if err := json.Unmarshal(data, &records); err != nil {
-        return nil, fmt.Errorf("failed to parse weight data: %w", err)
-    }
+	var records []models.WeightRecord
+	if err := json.Unmarshal(data, &records); err != nil {
+		return nil, fmt.Errorf("failed to parse weight data: %w", err)
+	}
 
-    var filtered []models.WeightRecord
-    for _, record := range records {
-        if isDefaultRange {
-            // For default range (last 30 days), normalize year to the target year
-            // and compare only month and day
-            startDay := start.YearDay()
-            endDay := end.YearDay()
-            recordDay := record.Date.YearDay()
-            
-            // Handle year wrap around (December to January)
-            if endDay < startDay {
-                // If the end day is less than start day, we're spanning a year boundary
-                if recordDay >= startDay || recordDay <= endDay {
-                    filtered = append(filtered, record)
-                }
-            } else {
-                // Normal case within the same year
-                if recordDay >= startDay && recordDay <= endDay {
-                    filtered = append(filtered, record)
-                }
-            }
-        } else {
-            // For explicit date ranges, compare full dates
-            if (record.Date.Equal(start) || record.Date.After(start)) &&
-               (record.Date.Equal(end) || record.Date.Before(end)) {
-                filtered = append(filtered, record)
-            }
-        }
-    }
+	var filtered []models.WeightRecord
+	for _, record := range records {
+		if isDefaultRange {
+			// For default range (last 30 days), normalize year to the target year
+			// and compare only month and day
+			startDay := start.YearDay()
+			endDay := end.YearDay()
+			recordDay := record.Date.YearDay()
 
-    return filtered, nil
+			// Handle year wrap around (December to January)
+			if endDay < startDay {
+				// If the end day is less than start day, we're spanning a year boundary
+				if recordDay >= startDay || recordDay <= endDay {
+					filtered = append(filtered, record)
+				}
+			} else {
+				// Normal case within the same year
+				if recordDay >= startDay && recordDay <= endDay {
+					filtered = append(filtered, record)
+				}
+			}
+		} else {
+			// For explicit date ranges, compare full dates
+			if (record.Date.Equal(start) || record.Date.After(start)) &&
+				(record.Date.Equal(end) || record.Date.Before(end)) {
+				filtered = append(filtered, record)
+			}
+		}
+	}
+
+	return filtered, nil
 }
 
 func (s *JSONStorage) GetLastWeightRecord() (*models.WeightRecord, error) {
