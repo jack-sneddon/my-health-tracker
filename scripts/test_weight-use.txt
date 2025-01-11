@@ -1,0 +1,6 @@
+# View the whole file
+cat out/test_weight.txt
+
+# Search for specific results
+grep "✓" out/test_weight.txt  # Show successful tests
+grep "✗" out/test_weight.txt  # Show failed tests

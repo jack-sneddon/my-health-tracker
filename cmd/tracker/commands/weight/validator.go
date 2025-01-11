@@ -4,10 +4,18 @@ package weight
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"time"
 
 	"github.com/jack-sneddon/my-health-tracker/internal/models"
 	"github.com/jack-sneddon/my-health-tracker/internal/validator"
+)
+
+// cmd/tracker/commands/weight/validator.go
+// Add these constants and function:
+
+const (
+	WeightIDPattern = `^w\d{5}$`
 )
 
 // ValidationResult encapsulates the result of a validation operation
@@ -24,6 +32,14 @@ const (
 	MaxWeight       = 250.0 // Maximum reasonable weight in pounds
 	MaxWeightChange = 10.0  // Maximum reasonable weight change in pounds per day
 )
+
+// ValidateWeightID validates the format of weight record IDs
+func ValidateWeightID(id string) error {
+	if !regexp.MustCompile(WeightIDPattern).MatchString(id) {
+		return fmt.Errorf("invalid weight record ID format. Must be 'w' followed by 5 digits")
+	}
+	return nil
+}
 
 // WeightRecord validates a complete weight record
 func WeightRecord(record models.WeightRecord, lastRecord *models.WeightRecord) ValidationResult {

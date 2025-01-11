@@ -28,7 +28,7 @@ func createDeleteCmdRunner(store storage.StorageManager) func(*cobra.Command, []
 		recordID := args[0]
 
 		// Validate record ID format
-		if err := validator.ValidateWeightID(recordID); err != nil {
+		if err := ValidateWeightID(recordID); err != nil {
 			return result.ValidationFailed(err).Error
 		}
 

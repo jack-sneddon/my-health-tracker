@@ -7,7 +7,18 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+# Setup test directory
+TEST_DATA_DIR=~/.health-tracker/data/test
+
+# Cleanup and setup
+rm -rf "$TEST_DATA_DIR"
+
 echo -e "${YELLOW}Starting weight list tests...${NC}"
+
+# Setup test data
+echo -e "${YELLOW}Setting up test data...${NC}"
+echo "y" | TEST_MODE=true ./bin/tracker weight add -v 185.5 --date 2024-01-08 --notes "First weight"
+echo "y" | TEST_MODE=true ./bin/tracker weight add -v 184.8 --date 2024-01-09 --notes "Second weight"
 
 echo -e "${YELLOW}Testing list with date range...${NC}"
 output=$(TEST_MODE=true ./bin/tracker weight list --from 2024-01-01 --to 2024-01-31)
