@@ -7,12 +7,15 @@ import (
 )
 
 // Shared flags across weight commands
+// cmd/tracker/commands/weight/weight.go
 type weightFlags struct {
-	value    float64
-	date     string
-	notes    string
-	fromDate string
-	toDate   string
+	value     float64
+	date      string
+	notes     string
+	fromDate  string
+	toDate    string
+	lastWeek  bool
+	lastMonth bool
 }
 
 var flags weightFlags

@@ -1,87 +1,109 @@
 # scripts/test_framework.sh
 #!/bin/bash
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# Colors and formatting
+RED=$(printf '\033[0;31m')
+GREEN=$(printf '\033[0;32m')
+YELLOW=$(printf '\033[1;33m')
+NC=$(printf '\033[0m')
 
 # Test data location
 TEST_DATA_DIR=~/.health-tracker/data/test
+TEST_RESULTS=()
+TOTAL_TESTS=0
+PASSED_TESTS=0
 
-# Cleanup function
-cleanup() {
-    if [ -d "$TEST_DATA_DIR" ]; then
-        echo -e "${YELLOW}Cleaning up test data directory: $TEST_DATA_DIR${NC}"
-        rm -rf "$TEST_DATA_DIR"
+# Setup functions
+setup_test_env() {
+    local test_name=$1
+    echo -e "${YELLOW}Starting $test_name tests...${NC}"
+    cleanup_test_data
+}
+
+cleanup_test_data() {
+    rm -rf "$TEST_DATA_DIR"
+}
+
+create_test_data() {
+    echo -e "${YELLOW}Creating test data...${NC}"
+    echo "y" | TEST_MODE=true ./bin/tracker weight add -v 185.5 --date 2024-01-08 --notes "First weight"
+    echo "y" | TEST_MODE=true ./bin/tracker weight add -v 184.8 --date 2024-01-09 --notes "Second weight"
+}
+
+# Test verification functions
+assert_success() {
+    local description=$1
+    local condition=$2
+    ((TOTAL_TESTS++))
+
+    if eval "$condition"; then
+        echo -e "${GREEN}✓ $description${NC}"
+        ((PASSED_TESTS++))
+        TEST_RESULTS+=("✓ $description")
+    else
+        echo -e "${RED}✗ $description${NC}"
+        TEST_RESULTS+=("✗ $description")
     fi
 }
 
-# Setup function
-setup() {
-    cleanup
-    echo -e "${YELLOW}Formatting code...${NC}"
-    go fmt ./...
-    
-    echo -e "${YELLOW}Building application...${NC}"
-    go build -o bin/tracker ./cmd/tracker
-    
-    # Verify test directory creation
-    if [ ! -d "$TEST_DATA_DIR" ]; then
-        echo -e "${YELLOW}Test directory will be created on first command${NC}"
-    fi
-}
-
-# Run test command with test mode flag
-run_test_cmd() {
-    local cmd="$1"
-    TEST_MODE=true $cmd
-}
-
-# Run test and compare output
-assert_output() {
-    local cmd="$1"
-    local expected="$2"
-    local description="$3"
-
-    echo "Testing: $description"
-    local output=$(TEST_MODE=true $cmd)
+assert_output_contains() {
+    local output=$1
+    local expected=$2
+    local description=$3
     
     if [[ "$output" == *"$expected"* ]]; then
-        echo -e "${GREEN}✓ Test passed: $description${NC}"
-        
-        # Verify test directory was created
-        if [ -d "$TEST_DATA_DIR" ]; then
-            echo -e "${GREEN}✓ Test directory exists: $TEST_DATA_DIR${NC}"
-        else
-            echo -e "${RED}✗ Test directory was not created${NC}"
-            return 1
-        fi
-        
-        return 0
+        echo -e "${GREEN}✓ $description${NC}"
+        ((PASSED_TESTS++))
+        TEST_RESULTS+=("✓ $description")
     else
-        echo -e "${RED}✗ Test failed: $description${NC}"
-        echo "Expected to contain: $expected"
-        echo "Got: $output"
+        echo -e "${RED}✗ $description${NC}"
+        echo -e "${RED}Expected to find: '$expected'${NC}"
+        echo -e "${RED}Actual output: '$output'${NC}"
+        TEST_RESULTS+=("✗ $description")
+    fi
+    ((TOTAL_TESTS++))
+}
+
+# Test summary
+show_test_summary() {
+    echo -e "\n${YELLOW}Test Summary${NC}"
+    echo "----------------"
+    echo "Total Tests: $TOTAL_TESTS"
+    echo "Passed: $PASSED_TESTS"
+    echo "Failed: $((TOTAL_TESTS - PASSED_TESTS))"
+
+    if [ $TOTAL_TESTS -eq $PASSED_TESTS ]; then
+        echo -e "${GREEN}All tests passed!${NC}"
+    else
+        echo -e "${RED}Some tests failed.${NC}"
+    fi
+}
+
+# Data verification
+verify_data_file() {
+    if [ -f "$TEST_DATA_DIR/weight.json" ]; then
+        echo -e "\n${YELLOW}Current test data:${NC}"
+        cat "$TEST_DATA_DIR/weight.json"
+    else
+        echo -e "${RED}No test data file found!${NC}"
         return 1
     fi
 }
 
-# Verify directory structure
-verify_test_structure() {
-    if [ ! -d "$TEST_DATA_DIR" ]; then
-        echo -e "${RED}✗ Test directory not found: $TEST_DATA_DIR${NC}"
-        return 1
+assert_not_contains() {
+    local output=$1
+    local unexpected=$2
+    local description=$3
+    
+    if [[ "$output" != *"$unexpected"* ]]; then
+        echo -e "${GREEN}✓ $description${NC}"
+        ((PASSED_TESTS++))
+        TEST_RESULTS+=("✓ $description")
+    else
+        echo -e "${RED}✗ $description${NC}"
+        echo -e "${RED}Found unexpected: '$unexpected'${NC}"
+        echo -e "${RED}In output: '$output'${NC}"
+        TEST_RESULTS+=("✗ $description")
     fi
-    
-    for file in weight.json exercise.json fasting.json soda.json; do
-        if [ ! -f "$TEST_DATA_DIR/$file" ]; then
-            echo -e "${RED}✗ Test file not found: $TEST_DATA_DIR/$file${NC}"
-            return 1
-        fi
-    done
-    
-    echo -e "${GREEN}✓ Test directory structure verified${NC}"
-    return 0
+    ((TOTAL_TESTS++))
 }

@@ -3,6 +3,7 @@ package weight
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jack-sneddon/my-health-tracker/cmd/tracker/commands/result"
@@ -21,6 +22,7 @@ type weightStats struct {
 	TotalChange   float64
 }
 
+// cmd/tracker/commands/weight/list.go
 func newListCmd(store storage.StorageManager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
@@ -30,38 +32,96 @@ func newListCmd(store storage.StorageManager) *cobra.Command {
 
 	cmd.Flags().StringVarP(&flags.fromDate, "from", "f", "", "Start date for listing weights")
 	cmd.Flags().StringVarP(&flags.toDate, "to", "t", "", "End date for listing weights")
+	// Add quick range flags
+	cmd.Flags().BoolVarP(&flags.lastWeek, "week", "w", false, "Show last 7 days")
+	cmd.Flags().BoolVarP(&flags.lastMonth, "month", "m", false, "Show last month")
 
 	return cmd
 }
 
+// cmd/tracker/commands/weight/list.go
 func createListCmdRunner(store storage.StorageManager) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		isDefaultRange := flags.fromDate == "" && flags.toDate == ""
 		var fromDate, toDate time.Time
 		var err error
+		var isDefaultRange bool
 
-		if isDefaultRange {
+		// Handle date range selection
+		switch {
+		case flags.lastWeek:
+			toDate = time.Now()
+			fromDate = toDate.AddDate(0, 0, -7)
+			isDefaultRange = false
+		case flags.lastMonth:
+			toDate = time.Now()
+			fromDate = toDate.AddDate(0, -1, 0)
+			isDefaultRange = false
+		case flags.fromDate == "" && flags.toDate == "":
 			fromDate, toDate = validator.GetDefaultDateRange()
-		} else {
+			isDefaultRange = true
+		default:
 			fromDate, toDate, err = validator.ValidateDateRange(flags.fromDate, flags.toDate)
 			if err != nil {
 				return result.ValidationFailed(err).Error
 			}
+			isDefaultRange = false
 		}
 
+		// Get records
 		records, err := store.GetWeightRange(fromDate, toDate, isDefaultRange)
 		if err != nil {
 			return result.StorageError(err).Error
 		}
 
 		if len(records) == 0 {
-			return result.NotFound("Weight records", fmt.Sprintf("%s to %s",
+			return result.NewError(fmt.Errorf("No weight records found between %s and %s",
 				fromDate.Format(validator.DateFormat),
 				toDate.Format(validator.DateFormat))).Error
 		}
 
-		stats := calculateWeightStats(records)
-		displayWeightList(records, stats, fromDate, toDate)
+		// Display header
+		fmt.Printf("\nWeight Records from %s to %s\n\n",
+			fromDate.Format(validator.DateFormat),
+			toDate.Format(validator.DateFormat))
+		fmt.Printf("%-8s  %-10s  %-7s  %s\n", "ID", "Date", "Weight", "Notes")
+		fmt.Println(strings.Repeat("-", 60))
+
+		// Display records and calculate statistics
+		var totalWeight float64
+		minWeight := records[0].Weight
+		maxWeight := records[0].Weight
+
+		for _, record := range records {
+			fmt.Printf("%-8s  %-10s  %7.1f  %s\n",
+				record.ID,
+				record.Date.Format(validator.DateFormat),
+				record.Weight,
+				record.Notes)
+
+			totalWeight += record.Weight
+			if record.Weight < minWeight {
+				minWeight = record.Weight
+			}
+			if record.Weight > maxWeight {
+				maxWeight = record.Weight
+			}
+		}
+
+		// Display summary and statistics
+		fmt.Printf("\nSummary:\n")
+		fmt.Printf("Total Records : %d\n", len(records))
+		fmt.Printf("Average Weight: %.1f lbs\n", totalWeight/float64(len(records)))
+		fmt.Printf("Weight Range  : %.1f - %.1f lbs (%.1f lbs)\n",
+			minWeight, maxWeight, maxWeight-minWeight)
+
+		// Show trend if more than one record
+		if len(records) > 1 {
+			firstWeight := records[0].Weight
+			lastWeight := records[len(records)-1].Weight
+			change := lastWeight - firstWeight
+			fmt.Printf("Overall Change: %.1f lbs\n", change)
+		}
+
 		return nil
 	}
 }

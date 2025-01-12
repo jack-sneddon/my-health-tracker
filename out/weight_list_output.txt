@@ -1,0 +1,285 @@
+-e [1;33mStarting weight_list tests...[0m
+-e 
+[1;33mSetting up test data...[0m
+✓ Weight record added successfully
+
+Weight Record:
+  ID:     w00001
+  Date:   2025-01-11
+  Weight: 185.5 lbs
+  Notes:  First weight
+✓ Weight record added successfully
+
+Weight Record:
+  ID:     w00002
+  Date:   2025-01-12
+  Weight: 184.8 lbs
+  Notes:  Second weight
+-e 
+[1;33mCurrent test data:[0m
+[
+    {
+        "id": "w00001",
+        "date": "2025-01-11T00:00:00Z",
+        "weight": 185.5,
+        "notes": "First weight"
+    },
+    {
+        "id": "w00002",
+        "date": "2025-01-12T00:00:00Z",
+        "weight": 184.8,
+        "notes": "Second weight"
+    }
+]-e 
+[1;33mTest 1: Basic list with date range[0m
+Test output:
+Error: No weight records found between 2024-01-01 and 2024-01-31
+Usage:
+  tracker weight list [flags]
+
+Flags:
+  -f, --from string   Start date for listing weights
+  -h, --help          help for list
+  -m, --month         Show last month
+  -t, --to string     End date for listing weights
+  -w, --week          Show last 7 days
+
+2025/01/12 12:27:08 Error: No weight records found between 2024-01-01 and 2024-01-31
+-e [0;31m✗ First weight record shown[0m
+-e [0;31mExpected to find: '185.5'[0m
+-e [0;31mActual output: 'Error: No weight records found between 2024-01-01 and 2024-01-31
+Usage:
+  tracker weight list [flags]
+
+Flags:
+  -f, --from string   Start date for listing weights
+  -h, --help          help for list
+  -m, --month         Show last month
+  -t, --to string     End date for listing weights
+  -w, --week          Show last 7 days
+
+2025/01/12 12:27:08 Error: No weight records found between 2024-01-01 and 2024-01-31'[0m
+-e [0;31m✗ Second weight record shown[0m
+-e [0;31mExpected to find: '184.8'[0m
+-e [0;31mActual output: 'Error: No weight records found between 2024-01-01 and 2024-01-31
+Usage:
+  tracker weight list [flags]
+
+Flags:
+  -f, --from string   Start date for listing weights
+  -h, --help          help for list
+  -m, --month         Show last month
+  -t, --to string     End date for listing weights
+  -w, --week          Show last 7 days
+
+2025/01/12 12:27:08 Error: No weight records found between 2024-01-01 and 2024-01-31'[0m
+-e [0;31m✗ Notes are displayed[0m
+-e [0;31mExpected to find: 'First weight'[0m
+-e [0;31mActual output: 'Error: No weight records found between 2024-01-01 and 2024-01-31
+Usage:
+  tracker weight list [flags]
+
+Flags:
+  -f, --from string   Start date for listing weights
+  -h, --help          help for list
+  -m, --month         Show last month
+  -t, --to string     End date for listing weights
+  -w, --week          Show last 7 days
+
+2025/01/12 12:27:08 Error: No weight records found between 2024-01-01 and 2024-01-31'[0m
+-e [0;31m✗ Correct record count shown[0m
+-e [0;31mExpected to find: 'Total Records : 2'[0m
+-e [0;31mActual output: 'Error: No weight records found between 2024-01-01 and 2024-01-31
+Usage:
+  tracker weight list [flags]
+
+Flags:
+  -f, --from string   Start date for listing weights
+  -h, --help          help for list
+  -m, --month         Show last month
+  -t, --to string     End date for listing weights
+  -w, --week          Show last 7 days
+
+2025/01/12 12:27:08 Error: No weight records found between 2024-01-01 and 2024-01-31'[0m
+-e [0;31m✗ Average weight calculated correctly[0m
+-e [0;31mExpected to find: 'Average Weight: 185.2 lbs'[0m
+-e [0;31mActual output: 'Error: No weight records found between 2024-01-01 and 2024-01-31
+Usage:
+  tracker weight list [flags]
+
+Flags:
+  -f, --from string   Start date for listing weights
+  -h, --help          help for list
+  -m, --month         Show last month
+  -t, --to string     End date for listing weights
+  -w, --week          Show last 7 days
+
+2025/01/12 12:27:08 Error: No weight records found between 2024-01-01 and 2024-01-31'[0m
+-e [0;31m✗ Weight range shown correctly[0m
+-e [0;31mExpected to find: 'Weight Range  : 184.8 - 185.5 lbs'[0m
+-e [0;31mActual output: 'Error: No weight records found between 2024-01-01 and 2024-01-31
+Usage:
+  tracker weight list [flags]
+
+Flags:
+  -f, --from string   Start date for listing weights
+  -h, --help          help for list
+  -m, --month         Show last month
+  -t, --to string     End date for listing weights
+  -w, --week          Show last 7 days
+
+2025/01/12 12:27:08 Error: No weight records found between 2024-01-01 and 2024-01-31'[0m
+-e 
+[1;33mTest 2: Empty date range[0m
+Test output:
+Error: No weight records found between 2023-01-01 and 2023-12-31
+Usage:
+  tracker weight list [flags]
+
+Flags:
+  -f, --from string   Start date for listing weights
+  -h, --help          help for list
+  -m, --month         Show last month
+  -t, --to string     End date for listing weights
+  -w, --week          Show last 7 days
+
+2025/01/12 12:27:08 Error: No weight records found between 2023-01-01 and 2023-12-31
+-e [0;32m✓ Empty result set handled correctly[0m
+-e 
+[1;33mTest 3: Invalid date range[0m
+Test output:
+Error: validation failed: 'from' date must be before 'to' date
+Usage:
+  tracker weight list [flags]
+
+Flags:
+  -f, --from string   Start date for listing weights
+  -h, --help          help for list
+  -m, --month         Show last month
+  -t, --to string     End date for listing weights
+  -w, --week          Show last 7 days
+
+2025/01/12 12:27:08 Error: validation failed: 'from' date must be before 'to' date
+-e [0;32m✓ Invalid date range detected[0m
+-e 
+[1;33mTest 4: Default date range (no dates specified)[0m
+Test output:
+
+Weight Records from 2024-12-13 to 2025-01-12
+
+ID        Date        Weight   Notes
+------------------------------------------------------------
+w00001    2025-01-11    185.5  First weight
+w00002    2025-01-12    184.8  Second weight
+
+Summary:
+Total Records : 2
+Average Weight: 185.2 lbs
+Weight Range  : 184.8 - 185.5 lbs (0.7 lbs)
+Overall Change: -0.7 lbs
+-e [0;32m✓ Records shown in default range[0m
+-e [0;32m✓ Summary shown for default range[0m
+-e 
+[1;33mTest 5: Single day range[0m
+Test output:
+
+Weight Records from 2025-01-12 to 2025-01-12
+
+ID        Date        Weight   Notes
+------------------------------------------------------------
+w00002    2025-01-12    184.8  Second weight
+
+Summary:
+Total Records : 1
+Average Weight: 184.8 lbs
+Weight Range  : 184.8 - 184.8 lbs (0.0 lbs)
+-e [0;32m✓ Single day record shown[0m
+-e [0;32m✓ Single record count correct[0m
+-e 
+[1;33mTest 6: Invalid date format[0m
+Test output:
+Error: validation failed: invalid 'from' date: invalid date format. Use YYYY-MM-DD
+Usage:
+  tracker weight list [flags]
+
+Flags:
+  -f, --from string   Start date for listing weights
+  -h, --help          help for list
+  -m, --month         Show last month
+  -t, --to string     End date for listing weights
+  -w, --week          Show last 7 days
+
+2025/01/12 12:27:08 Error: validation failed: invalid 'from' date: invalid date format. Use YYYY-MM-DD
+-e [0;32m✓ Invalid date format detected[0m
+-e 
+[1;33mTest 7: Last week range[0m
+Test output:
+
+Weight Records from 2025-01-05 to 2025-01-12
+
+ID        Date        Weight   Notes
+------------------------------------------------------------
+w00001    2025-01-11    185.5  First weight
+w00002    2025-01-12    184.8  Second weight
+
+Summary:
+Total Records : 2
+Average Weight: 185.2 lbs
+Weight Range  : 184.8 - 185.5 lbs (0.7 lbs)
+Overall Change: -0.7 lbs
+-e [0;32m✓ Date range header shown[0m
+-e [0;32m✓ Shows correct number of records[0m
+-e [0;32m✓ Shows first weight[0m
+-e [0;32m✓ Shows second weight[0m
+-e 
+[1;33mTest 8: Last month range[0m
+Test output:
+
+Weight Records from 2024-12-12 to 2025-01-12
+
+ID        Date        Weight   Notes
+------------------------------------------------------------
+w00001    2025-01-11    185.5  First weight
+w00002    2025-01-12    184.8  Second weight
+
+Summary:
+Total Records : 2
+Average Weight: 185.2 lbs
+Weight Range  : 184.8 - 185.5 lbs (0.7 lbs)
+Overall Change: -0.7 lbs
+-e [0;32m✓ Date range header shown[0m
+-e [0;32m✓ Shows correct number of records[0m
+-e [0;32m✓ Shows first weight[0m
+-e [0;32m✓ Shows second weight[0m
+-e 
+[1;33mTest 9: Quick range takes precedence over from/to[0m
+✓ Weight record added successfully
+
+Weight Record:
+  ID:     w00003
+  Date:   2024-01-12
+  Weight: 183.0 lbs
+  Notes:  Old weight
+Test output:
+
+Weight Records from 2025-01-05 to 2025-01-12
+
+ID        Date        Weight   Notes
+------------------------------------------------------------
+w00001    2025-01-11    185.5  First weight
+w00002    2025-01-12    184.8  Second weight
+
+Summary:
+Total Records : 2
+Average Weight: 185.2 lbs
+Weight Range  : 184.8 - 185.5 lbs (0.7 lbs)
+Overall Change: -0.7 lbs
+-e [0;32m✓ Shows only records within last week[0m
+-e [0;32m✓ Does not show old record[0m
+-e 
+[1;33mTest Summary[0m
+----------------
+Total Tests: 23
+Passed: 17
+Failed: 6
+-e [0;31mSome tests failed.[0m

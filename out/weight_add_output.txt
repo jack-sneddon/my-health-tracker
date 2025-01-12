@@ -1,0 +1,44 @@
+-e [1;33mStarting weight_add tests...[0m
+-e 
+[1;33mTest 1: Basic weight addition[0m
+-e [0;32m✓ Weight record was added[0m
+-e [0;32m✓ Correct weight value shown[0m
+-e [0;32m✓ Notes were saved[0m
+-e 
+[1;33mCurrent test data:[0m
+[
+    {
+        "id": "w00001",
+        "date": "2024-01-08T00:00:00Z",
+        "weight": 185.5,
+        "notes": "First weight"
+    }
+]-e 
+[1;33mTest 2: Duplicate date handling[0m
+Current data before duplicate test:
+-e 
+[1;33mCurrent test data:[0m
+[
+    {
+        "id": "w00001",
+        "date": "2024-01-08T00:00:00Z",
+        "weight": 185.5,
+        "notes": "First weight"
+    }
+]Test output:
+⚠ Warning: Record already exists for 2024-01-08
+
+Do you want to overwrite this record? (y/N): ℹ Operation cancelled
+-e [0;32m✓ Duplicate date was detected[0m
+-e [0;32m✓ Operation was cancelled[0m
+-e [0;32m✓ Original weight value remained unchanged[0m
+-e 
+[1;33mTest 3: Invalid weight validation[0m
+-e [0;32m✓ Invalid weight was rejected[0m
+-e 
+[1;33mTest Summary[0m
+----------------
+Total Tests: 7
+Passed: 7
+Failed: 0
+-e [0;32mAll tests passed![0m

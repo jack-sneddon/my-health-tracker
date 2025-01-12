@@ -42,46 +42,42 @@ func createAddCmdRunner(store storage.StorageManager) func(*cobra.Command, []str
 			Notes:  flags.notes,
 		}
 
-		// Get validation context
-		lastWeight, err := store.GetLastWeightRecord()
-		if err != nil {
-			return result.StorageError(err).Error
+		// Basic validation
+		if err := validateWeightRange(record.Weight); err != nil {
+			return result.ValidationFailed(err).Error
 		}
 
-		// Validate with context
-		validationResult := ValidateWithContext(
-			ValidationRequest{
-				Record:     record,
-				LastRecord: lastWeight,
-			},
-			ValidationContext{
-				IsUpdate:    false,
-				AllowFuture: false,
-			},
-		)
-
-		if !validationResult.IsValid {
-			return result.ValidationFailed(validationResult.Error, validationResult.Warnings...).Error
-		}
-
-		// Handle warnings
-		if len(validationResult.Warnings) > 0 {
-			for _, warning := range validationResult.Warnings {
-				display.ShowWarning(warning)
-			}
-			if !display.ConfirmAction("Do you want to continue?").Confirmed {
-				return result.NewError(fmt.Errorf("operation cancelled")).Error
-			}
-		}
-
-		// Save record
+		// Try to add record
 		savedRecord, err := store.AddWeight(record)
 		if err != nil {
-			return result.StorageError(err).Error
+			if err.Error() == "duplicate_date" {
+				display.ShowWarning("Record already exists for %s", date.Format(validator.DateFormat))
+				confirmResult := display.ConfirmAction("Do you want to overwrite this record?")
+				if !confirmResult.Confirmed {
+					display.ShowInfo("Operation cancelled")
+					return nil
+				}
+				// If confirmed, use UpdateWeight instead
+				existingRecord, _ := store.GetWeight(date)
+				if existingRecord != nil {
+					record.ID = existingRecord.ID
+					if err := store.UpdateWeight(record.ID, record); err != nil {
+						return result.StorageError(err).Error
+					}
+					savedRecord = record
+				}
+			} else {
+				return result.StorageError(err).Error
+			}
 		}
 
-		cmdResult := result.NewSuccess(savedRecord, "Weight record added successfully")
-		display.ShowCommandResult(cmdResult)
+		display.ShowSuccess("Weight record added successfully")
+		display.ShowWeightRecord(
+			savedRecord.ID,
+			savedRecord.Date.Format(validator.DateFormat),
+			fmt.Sprintf("%.1f", savedRecord.Weight),
+			savedRecord.Notes,
+		)
 		return nil
 	}
 }

@@ -359,15 +359,14 @@ func (s *JSONStorage) AddWeight(record models.WeightRecord) (models.WeightRecord
 		}
 	}
 
-	// Generate ID if it's a new record
-	if recordIndex == -1 {
-		record.ID = generateID(WeightIDPrefix, len(records))
-		records = append(records, record)
-	} else {
-		// Update existing record but keep its ID
-		record.ID = records[recordIndex].ID
-		records[recordIndex] = record
+	// If duplicate found, return error
+	if recordIndex != -1 {
+		return models.WeightRecord{}, fmt.Errorf("duplicate_date")
 	}
+
+	// Generate new ID and add record
+	record.ID = generateID(WeightIDPrefix, len(records))
+	records = append(records, record)
 
 	updatedData, err := json.MarshalIndent(records, "", "    ")
 	if err != nil {
