@@ -19,8 +19,21 @@ TOTAL=0
 setup_test_env() {
     local test_name=$1
     echo -e "${YELLOW}Starting ${test_name} tests...${NC}"
+
+    echo "Building application..."
+    # Format the code
+    go fmt ./...
+    # Tidy up modules
+    go mod tidy
+    # Check for errors
+    go vet ./...
+    # Build the binary
+    go build -o bin/tracker ./cmd/tracker
+
     cleanup_test_data
 }
+
+# ... rest of the framework ...
 
 cleanup_test_data() {
     rm -rf "$TEST_DATA_DIR"

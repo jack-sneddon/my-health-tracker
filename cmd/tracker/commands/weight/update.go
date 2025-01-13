@@ -3,11 +3,11 @@ package weight
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/jack-sneddon/my-health-tracker/cmd/tracker/commands/result"
 	"github.com/jack-sneddon/my-health-tracker/internal/display"
 	"github.com/jack-sneddon/my-health-tracker/internal/storage"
-	"github.com/jack-sneddon/my-health-tracker/internal/validator"
 	"github.com/spf13/cobra"
 )
 
@@ -29,11 +29,6 @@ func createUpdateCmdRunner(store storage.StorageManager) func(*cobra.Command, []
 	return func(cmd *cobra.Command, args []string) error {
 		recordID := args[0]
 
-		// Validate record ID format
-		if err := ValidateWeightID(recordID); err != nil {
-			return result.ValidationFailed(err).Error
-		}
-
 		// Get existing record
 		record, err := store.GetWeightByID(recordID)
 		if err != nil {
@@ -43,38 +38,29 @@ func createUpdateCmdRunner(store storage.StorageManager) func(*cobra.Command, []
 			return result.NotFound("Weight record", recordID).Error
 		}
 
+		// Store original weight for comparison
+		originalWeight := record.Weight
+
 		// Update fields if provided
 		if cmd.Flags().Changed("value") {
+			// Validate weight range first
+			if err := validateWeightRange(flags.value); err != nil {
+				return result.ValidationFailed(err).Error
+			}
 			record.Weight = flags.value
+
+			// Then check for significant change
+			change := math.Abs(record.Weight - originalWeight)
+			if change > MaxWeightChange {
+				display.ShowWarning(fmt.Sprintf("Weight change of %.1f lbs seems unusual", change))
+				if !display.ConfirmAction("Do you want to continue?").Confirmed {
+					display.ShowInfo("Operation cancelled")
+					return result.NewError(fmt.Errorf("operation cancelled")).Error
+				}
+			}
 		}
 		if cmd.Flags().Changed("notes") {
 			record.Notes = flags.notes
-		}
-
-		// Validate the updated weight
-		validationResult := ValidateWithContext(
-			ValidationRequest{
-				Record:     *record,
-				LastRecord: nil, // Will be fetched by storage layer
-			},
-			ValidationContext{
-				IsUpdate:    true,
-				AllowFuture: false,
-			},
-		)
-
-		if !validationResult.IsValid {
-			return result.ValidationFailed(validationResult.Error, validationResult.Warnings...).Error
-		}
-
-		// Handle warnings
-		if len(validationResult.Warnings) > 0 {
-			for _, warning := range validationResult.Warnings {
-				display.ShowWarning(warning)
-			}
-			if !display.ConfirmAction("Do you want to continue?").Confirmed {
-				return result.NewError(fmt.Errorf("operation cancelled")).Error
-			}
 		}
 
 		// Perform update
@@ -82,13 +68,8 @@ func createUpdateCmdRunner(store storage.StorageManager) func(*cobra.Command, []
 			return result.StorageError(err).Error
 		}
 
-		display.ShowSuccess("Weight record updated successfully")
-		display.ShowWeightRecord(
-			record.ID,
-			record.Date.Format(validator.DateFormat),
-			fmt.Sprintf("%.1f", record.Weight),
-			record.Notes,
-		)
+		cmdResult := result.NewSuccess(*record, "Weight record updated successfully")
+		display.ShowCommandResult(cmdResult)
 
 		return nil
 	}

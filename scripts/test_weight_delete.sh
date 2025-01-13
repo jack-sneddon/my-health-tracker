@@ -24,7 +24,7 @@ assert_output_contains "$output" "not found" "Shows not found message"
 # Test 3: Cancel deletion
 echo -e "\n${YELLOW}Test 3: Cancel deletion${NC}"
 echo "y" | TEST_MODE=true ./bin/tracker weight add -v 185.5 --date 2024-01-08 --notes "First weight"
-output=$(echo "n" | TEST_MODE=true ./bin/tracker weight delete w00002 2>&1)
+output=$(echo "n" | TEST_MODE=true ./bin/tracker weight delete w00001 2>&1)
 assert_output_contains "$output" "Operation cancelled" "Shows cancellation message"
 
 show_test_summary

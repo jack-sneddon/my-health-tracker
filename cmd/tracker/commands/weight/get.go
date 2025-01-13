@@ -2,8 +2,6 @@
 package weight
 
 import (
-	"fmt"
-
 	"github.com/jack-sneddon/my-health-tracker/cmd/tracker/commands/result"
 	"github.com/jack-sneddon/my-health-tracker/internal/display"
 	"github.com/jack-sneddon/my-health-tracker/internal/storage"
@@ -24,32 +22,29 @@ func newGetCmd(store storage.StorageManager) *cobra.Command {
 	return cmd
 }
 
-// cmd/tracker/commands/weight/get.go
 func createGetCmdRunner(store storage.StorageManager) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
+		// 1. Parse and validate date
 		date, err := validator.ParseDate(flags.date)
 		if err != nil {
 			return result.ValidationFailed(err).Error
 		}
 
+		// 2. Get record from storage
 		record, err := store.GetWeight(date)
 		if err != nil {
 			return result.StorageError(err).Error
 		}
 
+		// 3. Handle not found
 		if record == nil {
 			return result.NotFound("Weight record", flags.date).Error
 		}
 
-		// Directly display the record instead of using CommandResult
-		display.ShowWeightRecord(
-			record.ID,
-			record.Date.Format(validator.DateFormat),
-			fmt.Sprintf("%.1f", record.Weight),
-			record.Notes,
-		)
+		// 4. Create success result and display
+		cmdResult := result.NewSuccess(*record, "Found weight record")
+		display.ShowCommandResult(cmdResult)
 
-		// Return success without error
 		return nil
 	}
 }
