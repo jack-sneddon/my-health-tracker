@@ -3,7 +3,6 @@ package weight
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/jack-sneddon/my-health-tracker/cmd/tracker/commands/result"
@@ -22,7 +21,6 @@ type weightStats struct {
 	TotalChange   float64
 }
 
-// cmd/tracker/commands/weight/list.go
 func newListCmd(store storage.StorageManager) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
@@ -32,14 +30,12 @@ func newListCmd(store storage.StorageManager) *cobra.Command {
 
 	cmd.Flags().StringVarP(&flags.fromDate, "from", "f", "", "Start date for listing weights")
 	cmd.Flags().StringVarP(&flags.toDate, "to", "t", "", "End date for listing weights")
-	// Add quick range flags
 	cmd.Flags().BoolVarP(&flags.lastWeek, "week", "w", false, "Show last 7 days")
 	cmd.Flags().BoolVarP(&flags.lastMonth, "month", "m", false, "Show last month")
 
 	return cmd
 }
 
-// cmd/tracker/commands/weight/list.go
 func createListCmdRunner(store storage.StorageManager) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		var fromDate, toDate time.Time
@@ -79,25 +75,13 @@ func createListCmdRunner(store storage.StorageManager) func(*cobra.Command, []st
 				toDate.Format(validator.DateFormat))).Error
 		}
 
-		// Display header
-		fmt.Printf("\nWeight Records from %s to %s\n\n",
-			fromDate.Format(validator.DateFormat),
-			toDate.Format(validator.DateFormat))
-		fmt.Printf("%-8s  %-10s  %-7s  %s\n", "ID", "Date", "Weight", "Notes")
-		fmt.Println(strings.Repeat("-", 60))
-
-		// Display records and calculate statistics
+		// Calculate statistics
 		var totalWeight float64
 		minWeight := records[0].Weight
 		maxWeight := records[0].Weight
+		var change float64
 
 		for _, record := range records {
-			fmt.Printf("%-8s  %-10s  %7.1f  %s\n",
-				record.ID,
-				record.Date.Format(validator.DateFormat),
-				record.Weight,
-				record.Notes)
-
 			totalWeight += record.Weight
 			if record.Weight < minWeight {
 				minWeight = record.Weight
@@ -107,20 +91,24 @@ func createListCmdRunner(store storage.StorageManager) func(*cobra.Command, []st
 			}
 		}
 
-		// Display summary and statistics
-		fmt.Printf("\nSummary:\n")
-		fmt.Printf("Total Records : %d\n", len(records))
-		fmt.Printf("Average Weight: %.1f lbs\n", totalWeight/float64(len(records)))
-		fmt.Printf("Weight Range  : %.1f - %.1f lbs (%.1f lbs)\n",
-			minWeight, maxWeight, maxWeight-minWeight)
-
-		// Show trend if more than one record
 		if len(records) > 1 {
-			firstWeight := records[0].Weight
-			lastWeight := records[len(records)-1].Weight
-			change := lastWeight - firstWeight
-			fmt.Printf("Overall Change: %.1f lbs\n", change)
+			change = records[len(records)-1].Weight - records[0].Weight
 		}
+
+		// Display results through display package
+		display.ShowHeader(fmt.Sprintf("Weight Records from %s to %s",
+			fromDate.Format(validator.DateFormat),
+			toDate.Format(validator.DateFormat)))
+
+		display.ShowWeightList(records)
+
+		display.ShowStats(map[string]string{
+			"Total Records":  fmt.Sprintf("%d", len(records)),
+			"Average Weight": fmt.Sprintf("%.1f lbs", totalWeight/float64(len(records))),
+			"Weight Range": fmt.Sprintf("%.1f - %.1f lbs (%.1f lbs)",
+				minWeight, maxWeight, maxWeight-minWeight),
+			"Overall Change": fmt.Sprintf("%.1f lbs", change),
+		})
 
 		return nil
 	}

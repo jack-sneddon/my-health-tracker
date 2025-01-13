@@ -55,7 +55,7 @@ func createAddCmdRunner(store storage.StorageManager) func(*cobra.Command, []str
 				confirmResult := display.ConfirmAction("Do you want to overwrite this record?")
 				if !confirmResult.Confirmed {
 					display.ShowInfo("Operation cancelled")
-					return nil
+					return result.NewError(fmt.Errorf("operation cancelled")).Error
 				}
 				// If confirmed, use UpdateWeight instead
 				existingRecord, _ := store.GetWeight(date)
@@ -71,13 +71,10 @@ func createAddCmdRunner(store storage.StorageManager) func(*cobra.Command, []str
 			}
 		}
 
-		display.ShowSuccess("Weight record added successfully")
-		display.ShowWeightRecord(
-			savedRecord.ID,
-			savedRecord.Date.Format(validator.DateFormat),
-			fmt.Sprintf("%.1f", savedRecord.Weight),
-			savedRecord.Notes,
-		)
+		// Use CommandResult for success
+		cmdResult := result.NewSuccess(savedRecord, "Weight record added successfully")
+		display.ShowCommandResult(cmdResult)
+
 		return nil
 	}
 }

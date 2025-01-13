@@ -161,3 +161,18 @@ func ShowStats(stats map[string]string) {
 func ShowHeader(text string) {
 	headerColor.Printf("\n%s\n", text)
 }
+
+// internal/display/messages.go
+func ShowWeightList(records []models.WeightRecord) {
+	fmt.Printf("%-8s  %-10s  %-7s  %s\n", "ID", "Date", "Weight", "Notes")
+	fmt.Println(strings.Repeat("-", 60))
+
+	for _, record := range records {
+		fmt.Printf("%-8s  %-10s  %7.1f  %s\n",
+			record.ID,
+			record.Date.Format(validator.DateFormat),
+			record.Weight,
+			record.Notes)
+	}
+	fmt.Println()
+}

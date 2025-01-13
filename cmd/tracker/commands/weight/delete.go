@@ -58,7 +58,10 @@ func createDeleteCmdRunner(store storage.StorageManager) func(*cobra.Command, []
 			return result.StorageError(err).Error
 		}
 
-		display.ShowSuccess("Weight record deleted successfully")
+		// Use CommandResult for success
+		cmdResult := result.NewSuccess(nil, "Weight record deleted successfully")
+		display.ShowCommandResult(cmdResult)
+
 		return nil
 	}
 }
