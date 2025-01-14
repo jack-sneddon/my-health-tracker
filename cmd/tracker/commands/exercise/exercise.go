@@ -7,7 +7,6 @@ import (
 )
 
 // Shared flags across exercise commands
-// Shared flags across exercise commands
 type exerciseFlags struct {
 	// Basic flags for add/update
 	activity      string
@@ -16,6 +15,7 @@ type exerciseFlags struct {
 	date          string
 	notes         string
 	completed     bool
+	notCompleted  bool
 
 	// List command flags
 	fromDate  string
@@ -49,6 +49,7 @@ Examples:
 		newAddCmd(store),
 		newGetCmd(store),
 		newListCmd(store),
+		newUpdateCmd(store),
 		// Additional commands will be added here
 	)
 
