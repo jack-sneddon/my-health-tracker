@@ -103,9 +103,26 @@ func ShowCommandResult(result result.CommandResult) {
 			weightRecord.Notes,
 		)
 	}
+
+	if weightRecord, ok := result.Data.(models.WeightRecord); ok {
+		ShowWeightRecord(
+			weightRecord.ID,
+			weightRecord.Date.Format(validator.DateFormat),
+			fmt.Sprintf("%.1f", weightRecord.Weight),
+			weightRecord.Notes,
+		)
+	} else if exerciseRecord, ok := result.Data.(models.ExerciseRecord); ok {
+		ShowExerciseRecord(
+			exerciseRecord.Date.Format(validator.DateFormat),
+			string(exerciseRecord.Activity),
+			exerciseRecord.OtherActivity,
+			exerciseRecord.Duration,
+			exerciseRecord.Notes,
+			exerciseRecord.Completed,
+		)
+	}
 }
 
-// internal/display/messages.go
 func ShowTable(headers []string, rows [][]string) {
 	// Calculate column widths
 	widths := make([]int, len(headers))
@@ -175,4 +192,54 @@ func ShowWeightList(records []models.WeightRecord) {
 			record.Notes)
 	}
 	fmt.Println()
+}
+
+// ShowExerciseRecord displays a formatted exercise record
+func ShowExerciseRecord(date string, activity string, otherActivity string, duration int, notes string, completed bool) {
+	headerColor.Println("\nExercise Record:")
+	fmt.Printf("  Date:       %s\n", date)
+	if activity == "other" {
+		fmt.Printf("  Activity:   %s (%s)\n", activity, otherActivity)
+	} else {
+		fmt.Printf("  Activity:   %s\n", activity)
+	}
+	fmt.Printf("  Duration:   %d minutes\n", duration)
+	if notes != "" {
+		fmt.Printf("  Notes:      %s\n", notes)
+	}
+	fmt.Printf("  Completed:  %v\n", completed)
+}
+
+func ShowExerciseList(records []models.ExerciseRecord) {
+	headerColor.Printf("\n%-12s %-15s %-8s %-30s %s\n",
+		"Date",
+		"Activity",
+		"Duration",
+		"Notes",
+		"Completed")
+	fmt.Println(strings.Repeat("-", 80))
+
+	for _, record := range records {
+		// Format activity string
+		activityStr := string(record.Activity)
+		if record.Activity == models.Other {
+			activityStr = fmt.Sprintf("%s (%s)", record.Activity, record.OtherActivity)
+		}
+
+		fmt.Printf("%-12s %-15s %-8d %-30s %v\n",
+			record.Date.Format(validator.DateFormat),
+			activityStr,
+			record.Duration,
+			truncateString(record.Notes, 30),
+			record.Completed)
+	}
+	fmt.Println()
+}
+
+// Helper function to truncate strings for display
+func truncateString(str string, length int) string {
+	if len(str) <= length {
+		return str
+	}
+	return str[:length-3] + "..."
 }

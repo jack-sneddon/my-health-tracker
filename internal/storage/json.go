@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jack-sneddon/my-health-tracker/internal/models"
+	"github.com/jack-sneddon/my-health-tracker/internal/validator"
 )
 
 const (
@@ -47,7 +48,44 @@ func generateID(prefix string, currentRecords int) string {
 
 // Exercise record implementations
 func (s *JSONStorage) AddExercise(record models.ExerciseRecord) error {
-	return s.addRecord("exercise", record)
+	filepath := s.getFilePath("exercise")
+	lock := s.getLock(filepath)
+
+	lock.Lock()
+	defer lock.Unlock()
+
+	// Read existing records
+	data, err := os.ReadFile(filepath)
+	if err != nil {
+		return fmt.Errorf("failed to read exercise file: %w", err)
+	}
+
+	var records []models.ExerciseRecord
+	if err := json.Unmarshal(data, &records); err != nil {
+		return fmt.Errorf("failed to parse exercise data: %w", err)
+	}
+
+	// Check for duplicate date
+	for _, r := range records {
+		if r.Date.Equal(record.Date) {
+			return fmt.Errorf("duplicate_date")
+		}
+	}
+
+	// Add new record
+	records = append(records, record)
+
+	// Write back to file
+	updatedData, err := json.MarshalIndent(records, "", "    ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal exercise data: %w", err)
+	}
+
+	if err := os.WriteFile(filepath, updatedData, 0644); err != nil {
+		return fmt.Errorf("failed to write exercise file: %w", err)
+	}
+
+	return nil
 }
 
 func (s *JSONStorage) GetExerciseRange(start, end time.Time, isDefaultRange bool) ([]models.ExerciseRecord, error) {
@@ -631,6 +669,50 @@ func (s *JSONStorage) DeleteWeight(id string) error {
 
 	if err := os.WriteFile(filepath, updatedData, 0644); err != nil {
 		return fmt.Errorf("failed to write weight file: %w", err)
+	}
+
+	return nil
+}
+
+func (s *JSONStorage) UpdateExercise(date time.Time, record models.ExerciseRecord) error {
+	filepath := s.getFilePath("exercise")
+	lock := s.getLock(filepath)
+
+	lock.Lock()
+	defer lock.Unlock()
+
+	data, err := os.ReadFile(filepath)
+	if err != nil {
+		return fmt.Errorf("failed to read exercise file: %w", err)
+	}
+
+	var records []models.ExerciseRecord
+	if err := json.Unmarshal(data, &records); err != nil {
+		return fmt.Errorf("failed to parse exercise data: %w", err)
+	}
+
+	// Find and update the record
+	updated := false
+	for i := range records {
+		if records[i].Date.Equal(date) {
+			records[i] = record
+			updated = true
+			break
+		}
+	}
+
+	if !updated {
+		return fmt.Errorf("record not found for date: %s", date.Format(validator.DateFormat))
+	}
+
+	// Write back to file
+	updatedData, err := json.MarshalIndent(records, "", "    ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal exercise data: %w", err)
+	}
+
+	if err := os.WriteFile(filepath, updatedData, 0644); err != nil {
+		return fmt.Errorf("failed to write exercise file: %w", err)
 	}
 
 	return nil

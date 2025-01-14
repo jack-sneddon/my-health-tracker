@@ -28,6 +28,7 @@ type StorageManager interface {
 	AddExercise(models.ExerciseRecord) error
 	GetExercise(time.Time) (*models.ExerciseRecord, error)
 	GetExerciseRange(start, end time.Time, isDefaultRange bool) ([]models.ExerciseRecord, error)
+	UpdateExercise(date time.Time, record models.ExerciseRecord) error
 
 	// Fasting records
 	AddFasting(models.FastingRecord) error

@@ -68,6 +68,16 @@ verify_data_file() {
     fi
 }
 
+verify_exercise_file() {
+    if [ -f "$TEST_DATA_DIR/exercise.json" ]; then
+        echo -e "${YELLOW}Current test data:${NC}"
+        cat "$TEST_DATA_DIR/exercise.json"
+    else
+        echo -e "${RED}No test data file found!${NC}"
+        return 1
+    fi
+}
+
 # Summary
 show_test_summary() {
     echo -e "\n${YELLOW}Test Summary${NC}"
