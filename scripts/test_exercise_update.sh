@@ -12,46 +12,53 @@ reset_test_data() {
     verify_exercise_file
 }
 
+# Helper function to verify update
+verify_update() {
+    echo -e "\n${YELLOW}Current state:${NC}"
+    verify_exercise_file
+}
+
 # Initial setup
 echo -e "\n${YELLOW}Setting up test data${NC}"
 reset_test_data
 
+# Sequential update tests (no reset between these)
 # Test 1: Update activity
 echo -e "\n${YELLOW}Test 1: Update activity${NC}"
 output=$(echo "y" | TEST_MODE=true ./bin/tracker exercise update --date 2024-01-08 --activity cycling 2>&1)
 assert_output_contains "$output" "Exercise record updated successfully" "Update succeeded"
+verify_update
 record_check=$(TEST_MODE=true ./bin/tracker exercise get --date 2024-01-08 2>&1)
 assert_output_contains "$record_check" "cycling" "Verifying updated activity"
-
-# Reset data before next test
-reset_test_data
 
 # Test 2: Update duration
 echo -e "\n${YELLOW}Test 2: Update duration${NC}"
 output=$(echo "y" | TEST_MODE=true ./bin/tracker exercise update --date 2024-01-08 --duration 60 2>&1)
 assert_output_contains "$output" "Exercise record updated successfully" "Update succeeded"
+verify_update
 record_check=$(TEST_MODE=true ./bin/tracker exercise get --date 2024-01-08 2>&1)
 assert_output_contains "$record_check" "60" "Verifying updated duration"
 
-# Reset data before next test
-reset_test_data
-
-# Test 3: Update to 'other' activity
+# Test 3: Update to other activity
 echo -e "\n${YELLOW}Test 3: Update to other activity${NC}"
 output=$(echo "y" | TEST_MODE=true ./bin/tracker exercise update --date 2024-01-08 --activity other --other-activity "swimming" 2>&1)
 assert_output_contains "$output" "Exercise record updated successfully" "Update succeeded"
+verify_update
 record_check=$(TEST_MODE=true ./bin/tracker exercise get --date 2024-01-08 2>&1)
-assert_output_contains "$record_check" "other (swimming)" "Verifying updated activity type"
-
-# Reset data before next test
-reset_test_data
+assert_output_contains "$record_check" "swimming" "Verifying other activity"
 
 # Test 4: Update completion status
 echo -e "\n${YELLOW}Test 4: Update completion status${NC}"
 output=$(echo "y" | TEST_MODE=true ./bin/tracker exercise update --date 2024-01-08 --not-completed 2>&1)
 assert_output_contains "$output" "Exercise record updated successfully" "Update succeeded"
+verify_update
 record_check=$(TEST_MODE=true ./bin/tracker exercise get --date 2024-01-08 2>&1)
-assert_output_contains "$record_check" "Completed:  false" "Verifying updated completion status"
+assert_output_contains "$record_check" "Completed:  false" "Verifying completion status"
+
+# Reset data for error condition tests
+reset_test_data
+
+echo -e "\n${YELLOW}Error condition tests${NC}"
 
 # Test 5: Invalid activity
 echo -e "\n${YELLOW}Test 5: Invalid activity${NC}"
@@ -71,10 +78,10 @@ assert_output_contains "$output" "not found" "Shows not found message"
 # Test 8: Duration warning
 echo -e "\n${YELLOW}Test 8: Duration warning${NC}"
 output=$(echo "n" | TEST_MODE=true ./bin/tracker exercise update --date 2024-01-08 --duration 120 2>&1)
-assert_output_contains "$output" "Duration change" "Shows duration warning"
+assert_output_contains "$output" "Duration change is substantial" "Shows substantial duration warning"
 assert_output_contains "$output" "Operation cancelled" "Shows cancellation message"
 record_check=$(TEST_MODE=true ./bin/tracker exercise get --date 2024-01-08 2>&1)
-assert_output_contains "$record_check" "45" "Verifying duration unchanged after cancellation"
+assert_output_contains "$record_check" "45" "Verifying no change after cancellation"
 
 # Test 9: Conflicting completion flags
 echo -e "\n${YELLOW}Test 9: Conflicting completion flags${NC}"

@@ -71,8 +71,9 @@ func createUpdateCmdRunner(store storage.StorageManager) func(*cobra.Command, []
 
 			// Check for significant change
 			if flags.duration > originalDuration*2 || flags.duration < originalDuration/2 {
-				display.ShowWarning(fmt.Sprintf("Duration change from %d to %d minutes seems unusual",
-					originalDuration, flags.duration))
+				message := fmt.Sprintf("Duration change is substantial (from %d to %d minutes)",
+					originalDuration, flags.duration)
+				display.ShowWarning(message)
 				if !display.ConfirmAction("Do you want to continue?").Confirmed {
 					display.ShowInfo("Operation cancelled")
 					return result.NewError(fmt.Errorf("operation cancelled")).Error

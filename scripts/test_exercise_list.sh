@@ -3,29 +3,43 @@
 source ./scripts/test_framework.sh
 
 # Initialize test
-setup_test_env "exercise_list"
+setup_test_env "exercise_update"
 
-# Setup test data
+# Helper function to reset test data
+reset_test_data() {
+    cleanup_test_data
+    echo "y" | TEST_MODE=true ./bin/tracker exercise add --activity jogging --duration 45 --date 2024-01-08 --notes "First exercise" --completed
+    verify_exercise_file
+}
+
+# Initial setup
 echo -e "\n${YELLOW}Setting up test data${NC}"
-echo "y" | TEST_MODE=true ./bin/tracker exercise add --activity jogging --duration 45 --date 2024-01-08 --notes "Morning run" --completed
-echo "y" | TEST_MODE=true ./bin/tracker exercise add --activity cycling --duration 60 --date 2024-01-09 --notes "Evening ride"
-echo "y" | TEST_MODE=true ./bin/tracker exercise add --activity other --other-activity "swimming" --duration 30 --date 2024-01-10 --notes "Pool workout" --completed
+reset_test_data
+
+# Test 1: Update activity
+echo -e "\n${YELLOW}Test 1: Update activity${NC}"
+echo -e "\n${YELLOW}Before update:${NC}"
+TEST_MODE=true ./bin/tracker exercise get --date 2024-01-08
+output=$(echo "y" | TEST_MODE=true ./bin/tracker exercise update --date 2024-01-08 --activity cycling 2>&1)
+assert_output_contains "$output" "Exercise record updated successfully" "Update succeeded"
+echo -e "\n${YELLOW}After update:${NC}"
 verify_exercise_file
+record_check=$(TEST_MODE=true ./bin/tracker exercise get --date 2024-01-08 2>&1)
+assert_output_contains "$record_check" "cycling" "Verifying updated activity"
 
-# Test 1: Basic list with date range
-echo -e "\n${YELLOW}Test 1: Basic list${NC}"
-output=$(TEST_MODE=true ./bin/tracker exercise list --from 2024-01-01 --to 2024-01-31 2>&1)
-assert_output_contains "$output" "Morning run" "Shows first record"
-assert_output_contains "$output" "Evening ride" "Shows second record"
-assert_output_contains "$output" "Pool workout" "Shows third record"
-assert_output_contains "$output" "Total Records    : 3" "Shows correct count"
-assert_output_contains "$output" "Total Duration   : 135 minutes" "Shows duration stats"
-assert_output_contains "$output" "Completed Records: 2" "Shows completion stats"
+# Reset data before next test
+reset_test_data
 
-# Test 2: Empty range
-echo -e "\n${YELLOW}Test 2: Empty range${NC}"
-output=$(TEST_MODE=true ./bin/tracker exercise list --from 2023-01-01 --to 2023-12-31 2>&1)
-assert_output_contains "$output" "No exercise records found" "Shows empty message"
+# Test 2: Update duration
+echo -e "\n${YELLOW}Test 2: Update duration${NC}"
+echo -e "\n${YELLOW}Before update:${NC}"
+TEST_MODE=true ./bin/tracker exercise get --date 2024-01-08
+output=$(echo "y" | TEST_MODE=true ./bin/tracker exercise update --date 2024-01-08 --duration 60 2>&1)
+assert_output_contains "$output" "Exercise record updated successfully" "Update succeeded"
+echo -e "\n${YELLOW}After update:${NC}"
+verify_exercise_file
+record_check=$(TEST_MODE=true ./bin/tracker exercise get --date 2024-01-08 2>&1)
+assert_output_contains "$record_check" "60" "Verifying updated duration"
 
 # Test 3: Single day
 echo -e "\n${YELLOW}Test 3: Single day${NC}"

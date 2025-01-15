@@ -50,6 +50,7 @@ Examples:
 		newGetCmd(store),
 		newListCmd(store),
 		newUpdateCmd(store),
+		newDeleteCmd(store),
 		// Additional commands will be added here
 	)
 

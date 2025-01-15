@@ -243,3 +243,19 @@ func truncateString(str string, length int) string {
 	}
 	return str[:length-3] + "..."
 }
+
+func ShowExerciseDeleteConfirmation(date string, activity string, otherActivity string, duration int, notes string, completed bool) ConfirmationResult {
+	headerColor.Println("\nDelete Confirmation:")
+	fmt.Printf("  Date:       %s\n", date)
+	if activity == "other" {
+		fmt.Printf("  Activity:   %s (%s)\n", activity, otherActivity)
+	} else {
+		fmt.Printf("  Activity:   %s\n", activity)
+	}
+	fmt.Printf("  Duration:   %d minutes\n", duration)
+	if notes != "" {
+		fmt.Printf("  Notes:      %s\n", notes)
+	}
+	fmt.Printf("  Completed:  %v\n", completed)
+	return ConfirmAction("Are you sure you want to delete this record?")
+}
